@@ -3,6 +3,9 @@ import re
 import numpy as np
 import pandas as pd
 
+import wald_wolfowitz
+import streak_converter
+
 class StreaksBase:
     """
     Base class for streak analysis
@@ -13,39 +16,13 @@ class StreaksBase:
         return df.set_index("player_id")    
 
     def convert_to_streaks(self, bools, as_str=None):
-        if not as_str:
-            as_make_miss = bools.replace(0, "L").replace(1, "W")
-            as_str = "".join(as_make_miss)
-
-        make_streaks  = re.findall(r"(W{1,}+)", as_str)
-        miss_streaks = re.findall(r"(L{1,}+)", as_str)
-        total_streaks = len(make_streaks) + len(miss_streaks)
-
-        make_lengths = pd.Series(map(len, make_streaks))
-        miss_lengths = pd.Series(map(len, miss_streaks))
-
-        return {
-            'raw_data': as_str,
-            'make_lengths': make_lengths.value_counts(),
-            'miss_lengths': miss_lengths.value_counts(),
-            'make_streaks': make_streaks,
-            'miss_streaks': miss_streaks,
-            'total_streaks': total_streaks,
-            'makes': as_str.count("W"),
-            'misses': as_str.count("L")
-            }
+        return streak_converter.convert_to_streaks(bools, as_str)
 
     def get_expected_streaks(self, makes, misses):
-        """
-        Use Wald_Wolfowitz test to compute expected number of streaks.
-        """
-        return  (2 * (makes * misses) / (makes + misses)) + 1
+        return wald_wolfowitz.get_expected_streaks(makes, misses)
 
     def get_variances(self, makes, misses, expected_streaks):
-        # https://en.wikipedia.org/wiki/Wald%E2%80%93Wolfowitz_runs_test#Definition
-        numerator = (expected_streaks - 1) * (expected_streaks - 2)
-        denominator = (makes + misses - 1)
-        return numerator / denominator
+        return wald_wolfowitz.get_variance(makes, misses, expected_streaks)
 
     def calc_stats(self, df):
         df['expected_streaks'] = self.get_expected_streaks(df.makes, df.misses)
