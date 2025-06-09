@@ -55,6 +55,7 @@ class SimulateLukewarm(SimulationBase):
         simulates entire season (every player, every game) using actual shot counts and fg% by player
         """
         game_results = collections.defaultdict(list)
+        player_games = []
         
         # loop over every player_id + game_id combo in 'shots'
         for key, results in self.df.groupby(["player_id", "game_id"]):
@@ -65,6 +66,8 @@ class SimulateLukewarm(SimulationBase):
             shot_results = [sim_player.take_shot() for x in range(num_shots)]
             # add the results of those simulated shots to a list of makes/misses for that player_id
             game_results[player_id].append(shot_results)
+
+            player_games.append(shot_results)
 
             sim_player.end_game() # streaks don't persist between games (unless overridden in StreakyPlayer)
 
@@ -82,4 +85,5 @@ class SimulateLukewarm(SimulationBase):
         sim_summary =  pd.DataFrame(season_results, columns=["actual", "expected", "variance", "z_score"])
 
         self.game_results = game_results # for debug
+        self.player_games = player_games
         return sim_summary
