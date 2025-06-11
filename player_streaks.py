@@ -14,6 +14,10 @@ SLEEP_TIME = 2 #seconds between API requests
 
 
 class PlayerStreaks(StreaksBase):
+    """
+    This gets shot data using the NBA API. This code is obsolete,
+    but kept around to allow old notebooks to still work.
+    """
     def __init__(self, shot_type="FGA", season=None):
         self.shot_type = shot_type
         if season:
