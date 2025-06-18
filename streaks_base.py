@@ -31,6 +31,8 @@ class StreaksBase:
         df['sd'] = np.sqrt(df.variance)
         df['z_score'] = (df.total_streaks - df.expected_streaks) / df.sd
 
+        df['ww_percentile'] = 100 * scipy.stats.norm.cdf(df.z_score.tolist())
+
         if percentile_ranks:
             # get percentile rank data
             # this will be unbelievably slow on large datasets (makes + misses > 50, say)

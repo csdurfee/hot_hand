@@ -5,7 +5,8 @@ rng = np.random.default_rng(2718)
 class BasePlayer:
     def __init__(self, shooting_percentage):
         self.rng = rng
-        self.shooting_percentage = shooting_percentage        
+        if shooting_percentage:
+            self.shooting_percentage = shooting_percentage        
         self.game_history = []
         self.shoot_pct_history = []
 
@@ -30,6 +31,23 @@ class BasePlayer:
     def end_game(self):
         self.game_history = []
         self.shoot_pct_history = []
+
+class VariableFGPlayer(BasePlayer):
+    def __init__(self, shooting_weights, shooting_percentages):
+        self.shooting_weights = shooting_weights
+        self.shooting_percentages = shooting_percentages
+        return super().__init__(None)
+
+    def get_shooting_percentage(self):
+        """
+        simulate player taking different shots with variable probability & FG%
+        
+        eg. most players shoot a mix of 2's and 3's. does this make them look
+        less streaky/more unstreaky?
+
+        """
+        return rng.choice(self.shooting_percentages, p=self.shooting_weights)
+
 
 class LukewarmPlayer(BasePlayer):
     # when player has made more than lower/upper thresh, their shooting percentage 
