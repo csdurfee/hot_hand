@@ -14,14 +14,14 @@ class BasePlayer:
         ## base behavior -- always return the same shooting percentage
         return self.shooting_percentage
     
-    def get_rng(self):
+    def get_random(self):
         return self.rng.random()
     
     def take_shot(self):
         shoot_pct = self.get_shooting_percentage()
         # this allows me to track the shooting percentage changes due to streakiness
         self.shoot_pct_history.append(shoot_pct)
-        if self.get_rng() < shoot_pct:
+        if self.get_random() < shoot_pct:
             make_or_miss = 1
         else:
             make_or_miss = 0
@@ -33,25 +33,51 @@ class BasePlayer:
         self.shoot_pct_history = []
 
 class VariableFGPlayer(BasePlayer):
+    """
+    simulate player taking different shots with variable probability & FG%
+    
+    eg. most players shoot a mix of 2's and 3's. does this make them look
+    less streaky/more unstreaky?
+
+    """
     def __init__(self, shooting_weights, shooting_percentages):
         self.shooting_weights = shooting_weights
         self.shooting_percentages = shooting_percentages
         return super().__init__(None)
 
     def get_shooting_percentage(self):
-        """
-        simulate player taking different shots with variable probability & FG%
-        
-        eg. most players shoot a mix of 2's and 3's. does this make them look
-        less streaky/more unstreaky?
-
-        """
+        ## the rng.choice function is ridiculously slow... this simulation runs
+        ## about 10x slower than the LastFivePlayer below because of this function.
         return rng.choice(self.shooting_percentages, p=self.shooting_weights)
 
 
+class LastFivePlayer(BasePlayer):
+    """
+    models a player where their fg% changes based on how many of their last 5 shots
+    they've made.
+
+    `last5`: map of # makes in last 5 -> FG%
+    `base_rate`: the overall FG%
+    
+    """
+    def __init__(self, last5, base_rate):
+        self.last5 = last5
+        self.base_rate = base_rate
+        return super().__init__(None)
+
+    def get_shooting_percentage(self):
+        if len(self.game_history) < 5:
+            return self.base_rate
+        else:
+            num_makes = sum(self.game_history[-5:])
+            return self.last5[num_makes]
+
 class LukewarmPlayer(BasePlayer):
-    # when player has made more than lower/upper thresh, their shooting percentage 
-    # gets boosted/penalized.    
+    """
+    Models a player whose fg% changes based on whether they are having a good
+    shooting game or not. When a player's fg% on the game is below/above the lower/upper thresh,
+    their shooting percentage gets boosted/penalized. 
+    """
     def __init__(self, shooting_percentage):
         self.BOOST_POS_AMOUNT = .2
         self.BOOST_NEG_AMOUNT = -.2
@@ -93,7 +119,7 @@ class NormalPlayer(LukewarmPlayer):
 
 class OnlyHeatCheckPlayer(LukewarmPlayer):
     """
-    like lukewarm player but they only get a penalty to fg%age when they are shooting well.
+    like lukewarm player but they only get a penalty to fg percentage when they are shooting well.
     """
     def __init__(self, shooting_percentage):
         super().__init__(shooting_percentage)
@@ -102,7 +128,7 @@ class OnlyHeatCheckPlayer(LukewarmPlayer):
 
 class GetABucketPlayer(LukewarmPlayer):
     """
-    like lukewarm player but they only get a boost to fg %age when they are shooting poorly,
+    like lukewarm player but they only get a boost to fg percentage when they are shooting poorly,
     """
     def __init__(self, shooting_percentage):
         super().__init__(shooting_percentage)

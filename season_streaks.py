@@ -31,12 +31,12 @@ def get_all_shots():
     concated = pd.concat(all_shots)
     return fix_index(concated)
 
-def get_streaks_for_season(season, do_percentile_rank=True):
+def get_streaks_for_season(season, do_percentile_rank=True, shots=None):
     """
     this gets player-game level streakiness data for a single season of the NBA.
     """
-
-    shots =  pd.read_csv(f"kaggle_data/NBA_{season}_Shots.csv")
+    if shots is None:
+        shots =  pd.read_csv(f"kaggle_data/NBA_{season}_Shots.csv")
     # I didn't realize the NBA was returning shots
     # in reverse order. this wouldn't change the number of streaks, or number 
     # of makes/misses, but raw_data field would be backwards.
@@ -109,11 +109,12 @@ def get_all_seasons(min_year=MIN_SEASON, max_year=MAX_SEASON):
 def get_all_player_games(min_year=MIN_SEASON, max_year=MAX_SEASON):
     return get_all_seasons(min_year, max_year)
 
-def get_all_player_streaks():
+def get_all_player_streaks(all_seasons=None):
     """
     This gets streakiness data for every player over the course of their career.
     """
-    all_seasons = get_all_seasons()
+    if all_seasons is None:
+        all_seasons = get_all_seasons()
     streak_helper = streaks_base.StreaksBase()
     stats_df = pd.DataFrame(columns=["player_id", "player_name", "makes", 
                                 "misses", "total_streaks", "raw_data"])
